@@ -33,15 +33,30 @@ jobs:
       - name: Install npm dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Expo prebuild (generate android folder)
+      - name: Verify reanimated + worklets
+        run: |
+          echo "=== Reanimated ==="
+          cat node_modules/react-native-reanimated/package.json | grep '"version"'
+          echo "=== Worklets ==="
+          cat node_modules/react-native-worklets/package.json | grep '"version"'
+
+      - name: Expo prebuild
         run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build release APK
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
